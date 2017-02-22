@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css">
+    <script src="./bootstrap/js/jquery.js"></script>
+    <script src="bootstrap/js/bootstrap.js"></script>
+
+    <style>
+     #sideBar{
+         float: left;
+     }
+    </style>
+    <script>
+        $(document).ready(function(){
+            var t = 0      //for series
+            var mainList = getListFromStore();
+            mainList.forEach(function(item){
+                trAppend(item.cell,item.rs,item.d,t +=1)
+            });
+
+            //create submit function
+//            function createdTr(number,rs,d){
+//                var tr= $("<tr></tr>");
+//                var tdSer= $("<td></td>");
+//                $(tdSer).text(t += 1).addClass("ser");
+//                var tdNum= $("<td></td>");
+//                $(tdNum).addClass("cellNo");
+//                var tdRs= $("<td></td>");
+//                var tdDate= $("<td></td>");
+//                var tdremove= $("<td></td>");
+//                $(tdremove).addClass("removeTr ")
+//                var tdRsTol = $("<td></td>");
+//                var createSpan= $("<span></span>");
+//                $(createSpan).addClass("glyphicon glyphicon-remove-sign");
+//                $(tdNum).text(number);
+//                $(tdRs).text(rs);
+//                $(tdDate).text(d);
+//                $(tdremove).append(createSpan);
+//                $(tr).append(tdSer,tdNum,tdRs,tdDate,tdremove);
+//                $("#tbody").append(tr);
+//                $("#tbody tr:even").addClass("active");
+//                $("#tbody tr:odd").addClass("warning")
+//                $("#cellNo").val("");
+//                $("#rs").val("");
+//            }
+
+                //submit function
+            $("#submit").click(function(){
+                var cellNo = $("#cellNo").val();
+                var rs = $("#rs").val();
+                if(cellNo && rs ){
+                    var item = {
+                        "cell" : cellNo,
+                        "rs" : rs,
+                        "d": new Date()
+                    };
+                    mainList.push(item);
+                  //  $('#tbody').append(createdTr( item.cell, item.rs, item.d,t += 1)) //function
+                    trAppend(item.cell, item.rs, item.d,t += 1)
+                    setListInStore(mainList);
+                    clearAllFilter();
+                    $("#cellNo").val("")
+                    $("#rs").val("");
+                }
+                else if(!cellNo || !rs ){
+                    alert("plz fill the field")
+                }
+            });
+                    //search function
+            $("#searchField").on('keyup',function(){
+                var tbody = $("#tbody");
+                var searchField = $("#searchField").val()
+                autoNetworkSet()
+                for(var i=0; i < tbody.children().length; i++){
+                    var tr = tbody.children()[i];
+                    var val = $(tr).find(".cellNo").text();
+                    if( !searchField || val.indexOf(searchField) !== -1 ){
+                        $(tr).show();
+                    }
+                    else{
+                        $(tr).hide();
+                    }
+                }
+            })
+
+                    //clear button function
+            $("#clearBtn").click(function(){
+                $("#tbody").children().show()
+                clearAllFilter()
+            })
+
+                    //search Network through jquery
+            $("#network").on("change",function(event){
+                checkNetwork();
+            })
+
+                    //remove TR
+            $("#tbody").on('click','span', function(){
+                var i = $(this).closest('tr').find(".ser").text();
+                i = Number(i)-1;
+                mainList.splice(i,1);
+                setListInStore(mainList)
+                $(this).closest('tr').remove();
+                $("#tbody tr").removeClass("active warning");
+                $("#tbody tr:even").addClass("active");
+                $("#tbody tr:odd").addClass("warning");
+                 t = 0;
+                for(var i=0; i< $("#tbody").children().length; i++){
+                    var tr = $("#tbody").children()[i];
+                    $(tr).find(".ser").text(t += 1);
+                }
+            })
+            function trAppend(cellNo,rs,d,serialNo){
+                var tbody = $("#tbody")
+                tbody.append(createdTr(cellNo,rs,d,serialNo));
+               // $("#tbody tr").removeClass("active warning");
+                $("#tbody tr:even").addClass("active")
+                $("#tbody tr:odd").addClass("warning")
+            }
+            function createdTr(cellNo,rs,d,t){
+                return "<tr>"+
+                        "<td class='ser'>"+ t +"</td>"+
+                        "<td class='cellNo'>"+ cellNo +"</td>"+
+                        "<td>"+ rs +"</td>"+
+                        "<td>"+ d +"</td>"+
+                        "<td class='removeTr'><span class='glyphicon glyphicon-remove-sign'></span></td>"+
+                        "</tr>"
+            }
+            function compareAny(targetStr, arr){
+                return arr.some(function(str){
+                    return  targetStr == str;
+                });
+            }
+
+            function checkNetwork(){
+                var networkHash = {
+                    'telenor': ["0342","0343","0344","0345","0346","0347"],
+                    'zong': ["0311", "0312", "0313", "0314", "0315", "0316"],
+                    "jazz": ["0300", "0301", "0302", "0303", "0304", "0305", "0306", "0307", "0308", "0309"],
+                    "ufone" : ["0331", "0332", "0333", "0334", "0335", "0336"]
+                }
+                $("#searchField").val("");
+                for(var i=0; i< $("#tbody").children().length; i++) {
+                    var tr = $("#tbody").children()[i];
+                    var inputStr = $(tr).find(".cellNo").text().slice(0, 4);
+                    var networkName = event.target.value;
+                    if(!networkHash[networkName] || compareAny(inputStr, networkHash[networkName] )){
+                        $(tr).show();
+                    }
+                    else {
+                        $(tr).hide();
+                    }
+
+
+                    /*if(event.target.value == "allNetwork"){
+                        $(tr).show();
+                    }*/
+                    //else if(numbersHash2[networkName] ) {
+                    /*if(compareAny(inputStr, networkHash[networkName] )){
+                        $(tr).show();
+                    }
+                    else {
+                        $(tr).hide();
+                    }*/
+                    /*}
+                    else if(event.target.value == "zong"){
+                        if(compareAny(inputStr,numbersHash2["zong"])){
+                            $(tr).show();
+                        }
+                        else {
+                            $(tr).hide();
+                        }
+                    }
+                    else if(event.target.value == "jazz"){
+                        if(compareAny(inputStr,numbersHash2.jazz)){
+                            $(tr).show();
+                        }
+                        else {
+                            $(tr).hide();
+                        }
+                    }
+                    else if(event.target.value == "ufone"){
+                        if(compareAny(inputStr,numbersHash2.ufone)){
+                            $(tr).show();
+                        }
+                        else {
+                            $(tr).hide();
+                        }
+                    }*/
+                }
+            }
+
+//
+//            function checkNetwork(){
+//                var numbersHash = {
+//                    'telenor': ["0342","0343","0344","0345","0346","0347"],
+//                    'zong': ["0311", "0312", "0313", "0314", "0315", "0316"],
+//                    "jazz": ["0300", "0301", "0302", "0303", "0304", "0305", "0306", "0307", "0308", "0309"],
+//                    "ufone" : ["0331", "0332", "0333", "0334", "0335", "0336"]
+//                }
+//                $("#searchField").val("")
+//                for(var i=0; i< $("#tbody").children().length; i++){
+//                    var tr = $("#tbody").children()[i];
+//                    if(event.target.value == "allNetwork"){
+//                        $(tr).show();
+//                    }
+//                    else if(event.target.value == "telenor" ){
+//
+//                        $("#searchField").val("");
+//                        var inputStr = $(tr).find(".cellNo").text().slice(0, 4);
+//                        if( compare(inputStr, ["0342","0343","0344","0345","0346","0347"]) ){
+//                            $(tr).show();
+//                        } else {
+//                            $(tr).hide();
+//                        }
+//                    }
+//                    else if(event.target.value == "zong"){
+//                        $("#searchField").val("");
+//                        if( $(tr).find(".cellNo").text().slice(0, 4) == "0311" ||
+//                                $(tr).find(".cellNo").text().slice(0, 4) == "0312" ||
+//                                $(tr).find(".cellNo").text().slice(0, 4) == "0313" ||
+//                                $(tr).find(".cellNo").text().slice(0, 4) == "0314" ||
+//                                $(tr).find(".cellNo").text().slice(0, 4) == "0315" ||
+//                                $(tr).find(".cellNo").text().slice(0, 4) == "0316"){
+//                            $(tr).show();
+//                        }
+//                        else{
+//                            $(tr).hide();
+//                        }
+//                    }
+//                    else if(event.target.value == "jazz" ){
+//                        $("#searchField").val("");
+//                        if( $(tr).find(".cellNo").text().slice(0,4) == "0300" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0301" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0302" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0303" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0304" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0305" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0306" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0307" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0308" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0309"){
+//                            $(tr).show();
+//                        }
+//                        else {
+//                            $(tr).hide();
+//                        }
+//                    }
+//                    else if(event.target.value == "ufone"){
+//                        $("#searchField").val("");
+//                        if( $(tr).find(".cellNo").text().slice(0,4) == "0331" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0332" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0333" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0334" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0335" ||
+//                                $(tr).find(".cellNo").text().slice(0,4) == "0336"){
+//                            $(tr).show()
+//                        }
+//                        else {
+//                            $(tr).hide()
+//                        }
+//                    }
+//                }
+//            }
+
+            function autoNetworkSet() {
+                var searchFieldVal = $("#searchField").val();
+                var network = $("#network");
+                var searchVAl = searchFieldVal.slice(0,4)
+                var networkHash = {
+                    "telenor": ["0342", "0343", "0344", "0345", "0346", "0347"],
+                    "zong": ["0311", "0312", "0313", "0314", "0315", "0316"],
+                    "jazz": ["0300", "0301", "0302", "0303", "0304", "0305", "0306", "0307", "0308", "0309"],
+                    "ufone": ["0331", "0332", "0333", "0334", "0335", "0336"]
+                }
+                if(compareAny(searchVAl,networkHash.telenor)) {
+                    $(network).val("telenor")
+                }
+                else if(compareAny(searchVAl,networkHash.jazz)){
+                    $(network).val("jazz")
+                }
+                else if(compareAny(searchVAl,networkHash.zong)){
+                    $(network).val("zong")
+                }
+                else if(compareAny(searchVAl,networkHash.ufone)){
+                    $(network).val("ufone")
+                }
+                else {
+                    $(network).val("allNetwork")
+                }
+            }
+
+//                function autoNetworkSet2(){
+//                if(searchFieldVal.slice(0,4) == "0342" ||
+//                        searchFieldVal.slice(0,4) == "0343" ||
+//                        searchFieldVal.slice(0,4) == "0344" ||
+//                        searchFieldVal.slice(0,4) == "0345" ||
+//                        searchFieldVal.slice(0,4) == "0346" ||
+//                        searchFieldVal.slice(0,4) == "0347"){
+//                    $(network).val("telenor")
+//                }
+//                else if(searchFieldVal.slice(0,4) == "0311" ||
+//                        searchFieldVal.slice(0,4) == "0312" ||
+//                        searchFieldVal.slice(0,4) == "0313" ||
+//                        searchFieldVal.slice(0,4) == "0314" ||
+//                        searchFieldVal.slice(0,4) == "0315" ||
+//                        searchFieldVal.slice(0,4) == "0316" ){
+//                    $(network).val("zong")
+//                }
+//                else if(searchFieldVal.slice(0,4) == "0300" ||
+//                        searchFieldVal.slice(0,4) == "0301" ||
+//                        searchFieldVal.slice(0,4) == "0302" ||
+//                        searchFieldVal.slice(0,4) == "0303" ||
+//                        searchFieldVal.slice(0,4) == "0304" ||
+//                        searchFieldVal.slice(0,4) == "0305" ||
+//                        searchFieldVal.slice(0,4) == "0306" ||
+//                        searchFieldVal.slice(0,4) == "0307" ||
+//                        searchFieldVal.slice(0,4) == "0308" ||
+//                        searchFieldVal.slice(0,4) == "0309" ){
+//                    $(network).val("jazz")
+//                }
+//                else if(searchFieldVal.slice(0,4) == "0331" ||
+//                        searchFieldVal.slice(0,4) == "0332" ||
+//                        searchFieldVal.slice(0,4) == "0333" ||
+//                        searchFieldVal.slice(0,4) == "0334" ||
+//                        searchFieldVal.slice(0,4) == "0335" ||
+//                        searchFieldVal.slice(0,4) == "0336" ){
+//                    $(network).val("ufone")
+//                }
+//                else{
+//                    $(network).val("allNetwork")
+//                }
+//            }
+
+
+
+            function clearAllFilter(){
+                $("#tbody").children().show();
+                $("#searchField").val("");
+                $("#network").val("allNetwork")
+            }
+            function getListFromStore(){
+                var list = localStorage.getItem("list");
+                if(list){
+                    list = JSON.parse(list);
+                    list.forEach(function(item){
+                        item.d = new Date(item.d);
+                    });
+                    return list;
+                }
+                return [];
+            }
+            function setListInStore(list){
+                localStorage.setItem("list", JSON.stringify(list))
+            }
+
+        })              // end document
+
+
+
+
+    </script>
+</head>
+<body class="container" style="background-color: rgba(15, 15, 15, 0.09)">
+    <form class="form-inline">
+        <div class="form-group">
+            <label for="cellNo">Cell number</label>
+            <input type="number" class="form-control" id="cellNo"   placeholder="CELL NUMBER">
+        </div>
+        <div class="form-group">
+            <label for="rs">Rupees</label>
+            <input type="number" class="form-control" id="rs"   placeholder="RUPEES">
+        </div>
+        <button type="button" class="btn btn-default" id="submit">Submit</button>
+        <div class="form-group">
+            <label for="searchField">Search number</label>
+            <input type="number" class="form-control" id="searchField"  placeholder="search number">
+        </div>
+        <button type="button" class="btn btn-default" id="clearBtn">Clear</button>
+    </form><br>
+
+    <div id="sideBar">
+    <select id="network">
+        <option value="allNetwork">All Network</option>
+        <option value="telenor">Telenor</option>
+        <option value="jazz">Jazz</option>
+        <option value="zong">Zong</option>
+        <option value="ufone">Ufone</option>
+    </select>
+    </div>
+        
+    <br><br>
+
+    <table class="table">
+        <thead>
+        <tr class="success">
+            <th>Ser. No</th>
+            <th>Cell number</th>
+            <th>Rupees</th>
+            <th>Time</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody id="tbody">
+        </tbody>
+    </table>
+
+</body>
+</html>
